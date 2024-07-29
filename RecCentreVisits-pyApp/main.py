@@ -4,6 +4,7 @@
 
 from tweety.exceptions import ActionRequired, RateLimitReached
 from tweety import Twitter
+EASTERNTIMEOFFSET = -4
 
 f = open("output.csv", 'w')  # Open and clear output.csv
 tweetsCSVText = ""  # Will hold each pages scraped information
@@ -48,7 +49,15 @@ for times in range(0, 100):  # Get x number of twitter pages
                 num = num[0:x]
                 break
 
-        tweetsCSVText += str(tweet.date) + ", " + num + "\n"  # Save the tweet data to string
+        tweetDate = str(tweet.date)
+        indexHourStart = tweetDate.index(" ")
+        indexHourEnd = tweetDate.index(":", indexHourStart)
+        dateHour = int(tweetDate[indexHourStart:indexHourEnd])
+
+        tweetDateNew = tweetDate[:indexHourStart+1] + str(dateHour + EASTERNTIMEOFFSET) + tweetDate[indexHourEnd:]
+        tweetDateNew = tweetDateNew.replace("+00:00", "")
+
+        tweetsCSVText += tweetDateNew + ", " + num + "\n"  # Save the tweet data to string
     f.write(tweetsCSVText)  # Write the last page to csv file
     tweetsCSVText = ""  # Reset string for next page
     if not all_tweets.is_next_page:
