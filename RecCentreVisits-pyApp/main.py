@@ -4,6 +4,7 @@
 
 from tweety.exceptions import ActionRequired, RateLimitReached
 from tweety import Twitter
+import re;
 EASTERNTIMEOFFSET = -4
 
 f = open("output.csv", 'w')  # Open and clear output.csv
@@ -31,31 +32,16 @@ for times in range(0, 100):  # Get x number of twitter pages
     tweetsCount += len(all_tweets.tweets)
     for tweet in all_tweets:  # Process each tweet on page (usually 20 of them)
         tweetTxt = tweet.text.lower()  # The text of the tweet
-        indexStart = 0  # Index of "WR"
         if "wr" not in tweetTxt:  # Tweet does not have "wr"
             print("Could not find \'WR\' - Skipping tweet on  " + str(tweet.date) + ": " + tweetTxt + "\n\n")
             break
-        else:  # Get index of "wr"
-            indexStart = tweetTxt.index("wr")
-        if tweetTxt[indexStart + 2] == " ":  # tweet is format "WR 12" (has space)
-            indexStart += 3
-        else:  # tweet is format "WR12" (no space)
-            indexStart += 2
 
-        indexEnd = tweetTxt.index("\n", indexStart)  # Get the index of the end of the "wr" line
-        num = tweetTxt[indexStart:indexEnd] + 'a'  # Get the WR value, some emojis didn't process properly, adding a character to end fixed
-        for x in range(0, len(num)):  # Remove the emoji(s)
-            if not num[x].isnumeric():
-                num = num[0:x]
-                break
+        matches = re.findall("\w*\d+", tweetTxt)  # Get all numbers
+        num = matches[0]  # WR num should be the first number
 
         tweetDate = str(tweet.date)
-        indexHourStart = tweetDate.index(" ")
-        indexHourEnd = tweetDate.index(":", indexHourStart)
-        dateHour = int(tweetDate[indexHourStart:indexHourEnd])
-
-        tweetDateNew = tweetDate[:indexHourStart+1] + str(dateHour + EASTERNTIMEOFFSET) + tweetDate[indexHourEnd:]
-        tweetDateNew = tweetDateNew.replace("+00:00", "")
+        dateHour = int(re.findall(" \d+", tweetDate)[0][1:3])  # Get hour of tweet
+        tweetDateNew = re.findall("\S+ ", tweetDate)[0] + str((dateHour + EASTERNTIMEOFFSET)%24) + re.findall(":\d+:\d+", tweetDate)[0]  # New format of date
 
         tweetsCSVText += tweetDateNew + ", " + num + "\n"  # Save the tweet data to string
     f.write(tweetsCSVText)  # Write the last page to csv file
