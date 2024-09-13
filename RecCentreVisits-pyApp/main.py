@@ -4,8 +4,10 @@
 
 from tweety.exceptions import ActionRequired, RateLimitReached
 from tweety import Twitter
-import re;
-EASTERNTIMEOFFSET = -4
+from datetime import datetime
+import pytz
+import re
+timezone = pytz.timezone('America/Toronto')
 app = Twitter("session")  # Create a twitter session
 
 # Sign in to new session
@@ -41,57 +43,45 @@ lastDate = f.readline()
 
 f.seek(0, 2)
 if lastDate is not None:  # Get info of last tweet in CSV file
-    lastMonth = int(re.findall("-\d+-", lastDate)[0][1:-1])
-    lastDay = int(re.findall("-\d+", lastDate)[1][1:])
-    lastHour = int(re.findall("\d+:", lastDate)[0][:-1])
-    lastWR = int(re.findall(",\d+", lastDate)[0][1:])
+    lastWR = int(re.findall(",\d+", lastDate)[0][1:])  # Last WR val
+    lastDate = re.findall(".+,", lastDate)[0][:-1]
+    last_datetime = datetime.strptime(lastDate, '%Y-%m-%d %H:%M')
+    last_datetime = timezone.localize(last_datetime)  # last tweet date in Toronto time zone
 tweetsCSVText = ""  # Will hold each pages scraped information
 tweetsCount = 0
 
 for times in range(0, 4):  # Get x number of twitter pages
     for tweet in all_tweets:  # Process each tweet on page (usually 20 of them)
         tweetTxt = tweet.text.lower()  # The text of the tweet
+        lines = tweetTxt.splitlines()  # lines of the tweet
 
-        if "wr" not in tweetTxt:  # Tweet does not have "wr"
+        # Get the line that has with "wr" in it
+        wr_line = next((line for line in lines if "wr" in line), None)
+
+        if wr_line is None:
             print("Could not find \'WR\' - Skipping tweet on  " + str(tweet.date) + ": " + tweetTxt + "\n\n")
             break
 
-        matches = re.findall("\d+", tweetTxt)  # Get all numbers
-        num = matches[0]  # WR num should be the first number
+        num = re.findall("\d+", wr_line)[0]  # Get wr value
 
-        tweetDate = str(tweet.date)
-        tweetMonth = int(re.findall("-\d+-", tweetDate)[0][1:-1])
-        tweetDay = int(re.findall("-\d+", tweetDate)[1][1:])
-        tweetHour = int(re.findall(" \d+", tweetDate)[0][1:3])  # Get hour of tweet
+        tweetDate = re.findall(".+:\d+:", str(tweet.date))[0][:-1]  # Date and time from tweet
+        utc_datetime = datetime.strptime(tweetDate, '%Y-%m-%d %H:%M')  # Make date and time into a datetime obj
+        local_datetime = utc_datetime.replace(tzinfo=pytz.utc).astimezone(timezone)  # Change it from UTC to Toronto time (ET)
 
-        if tweetHour < -EASTERNTIMEOFFSET:  # Account for stupid ETC to ET time conversions
-            tweetDay -= 1
-            if tweetDay < 0:
-                tweetMonth -= 1
-                tweetDay = 30
-                if tweetMonth == 0:
-                    tweetMonth = 12
-
-        tweetHour = (tweetHour + EASTERNTIMEOFFSET) % 24  # Change tweets hour to eastern time
-
-        if tweetMonth == lastMonth and tweetDay == lastDay and tweetHour == lastHour and int(num) == lastWR:  # Stop code when tweet is caught up
-            print("Matching tweet with start of CSV file. \nNew tweet time:" + re.findall(" \d+:\d+", tweetDate)[0] + "/" + str(tweetHour) + re.findall(":\d+", tweetDate)[0] + "\nStart of CSV time:" + re.findall(" .+,", lastDate)[0][:-1] + "\nEnter 'S' to stop.")
-            input1 = input().lower()
-            if input1 == 's':
-                stop = True
-                break
-
-        if tweetMonth <= lastMonth and tweetDay < lastDay:
-            print("Got too many tweets, cleanup CSV file around " + str(lastMonth) + "-" + str(lastDay))
+        if last_datetime == local_datetime and lastWR == int(num):  # Stop code when tweet is caught up
+            print("Caught up to newest tweet already in Output.csv")
             stop = True
             break
 
-        tweetDateNew = re.findall("\d+", tweetDate)[0] + "-" + str(tweetMonth).zfill(2) + "-" + str(tweetDay).zfill(2) + " " + str(tweetHour) + re.findall(":\d+:", tweetDate)[0][:-1]  # New format of date
-        tweetsCSVText = tweetDateNew + "," + num + "\n" + tweetsCSVText  # Save the tweet data to start of string
+        if last_datetime > local_datetime:  # In case there is some error where the previous if statement doesn't stop the code, this will stop the tweet if the new tweet is from before the oldest tweet previously processed
+            print("Stopping due to error.\nGot a tweet before the last Output.csv line.\nDouble check output around new tweet time: " + local_datetime.strftime('%Y-%m-%d %H:%M') + " and previous tweet time: " + last_datetime.strftime('%Y-%m-%d %H:%M'))
+            stop = True
+            break
+
+        tweetsCSVText = local_datetime.strftime('%Y-%m-%d %H:%M,') + num + "\n" + tweetsCSVText  # Save the tweet data to start of string
         tweetsCount += 1
 
     if stop:
-        print("Stopping")
         break
 
     if not all_tweets.is_next_page:
