@@ -50,7 +50,7 @@ if lastDate is not None:  # Get info of last tweet in CSV file
 tweetsCSVText = ""  # Will hold each pages scraped information
 tweetsCount = 0
 
-for times in range(0, 4):  # Get x number of twitter pages
+for times in range(0, 100):  # Get x number of twitter pages
     for tweet in all_tweets:  # Process each tweet on page (usually 20 of them)
         tweetTxt = tweet.text.lower()  # The text of the tweet
         lines = tweetTxt.splitlines()  # lines of the tweet
