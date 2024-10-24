@@ -43,7 +43,7 @@ lastDate = f.readline()
 
 f.seek(0, 2)
 if lastDate is not None:  # Get info of last tweet in CSV file
-    lastWR = int(re.findall(",\d+", lastDate)[0][1:])  # Last WR val
+    lastWR = int(re.findall(r",\d+", lastDate)[0][1:])  # Last WR val
     lastDate = re.findall(".+,", lastDate)[0][:-1]
     last_datetime = datetime.strptime(lastDate, '%Y-%m-%d %H:%M')
     last_datetime = timezone.localize(last_datetime)  # last tweet date in Toronto time zone
@@ -54,19 +54,19 @@ for times in range(0, 100):  # Get x number of twitter pages
     for tweet in all_tweets:  # Process each tweet on page (usually 20 of them)
         tweetTxt = tweet.text.lower()  # The text of the tweet
         lines = tweetTxt.splitlines()  # lines of the tweet
+        
+        tweetDate = re.findall(r".+:\d+:", str(tweet.date))[0][:-1]  # Date and time from tweet
+        utc_datetime = datetime.strptime(tweetDate, '%Y-%m-%d %H:%M')  # Make date and time into a datetime obj
+        local_datetime = utc_datetime.replace(tzinfo=pytz.utc).astimezone(timezone)  # Change it from UTC to Toronto time (ET)
 
         # Get the line that has with "wr" in it
         wr_line = next((line for line in lines if "wr" in line), None)
 
         if wr_line is None:
-            print("Could not find \'WR\' - Skipping tweet on  " + str(tweet.date) + ": " + tweetTxt + "\n\n")
-            break
+            print("Could not find \'WR\' - Skipping tweet on " + str(local_datetime) + ": " + tweetTxt + "\n\n")
+            continue
 
-        num = re.findall("\d+", wr_line)[0]  # Get wr value
-
-        tweetDate = re.findall(".+:\d+:", str(tweet.date))[0][:-1]  # Date and time from tweet
-        utc_datetime = datetime.strptime(tweetDate, '%Y-%m-%d %H:%M')  # Make date and time into a datetime obj
-        local_datetime = utc_datetime.replace(tzinfo=pytz.utc).astimezone(timezone)  # Change it from UTC to Toronto time (ET)
+        num = re.findall(r"\d+", wr_line)[0]  # Get wr value
 
         if last_datetime == local_datetime and lastWR == int(num):  # Stop code when tweet is caught up
             print("Caught up to newest tweet already in Output.csv")
