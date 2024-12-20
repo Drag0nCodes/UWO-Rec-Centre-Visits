@@ -66,7 +66,10 @@ for times in range(0, 100):  # Get x number of twitter pages
             print("Could not find \'WR\' - Skipping tweet on " + str(local_datetime) + ": " + tweetTxt + "\n\n")
             continue
 
-        num = re.findall(r"\d+", wr_line)[0]  # Get wr value
+        if (re.findall(r"\d+", wr_line)):
+            num = re.findall(r"\d+", wr_line)[0]  # Get wr value
+        else: 
+            print("Could not find number value in tweet - Skipping tweet on " + str(local_datetime) + ": " + tweetTxt + "\n\n")
 
         if last_datetime == local_datetime and lastWR == int(num):  # Stop code when tweet is caught up
             print("Caught up to newest tweet already in Output.csv")
