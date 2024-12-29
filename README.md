@@ -8,8 +8,4 @@ This is a simple script to scrape the twitter post data from @WesternWeightRm an
 
 ## Usage and info
 
-The excel file Rec Centre.xlsx in the python folder has the best information on the busyness of the weight room. As twitter changed their API policy (thanks Elon Musk for nothing) I was having to use a third-party API, [Tweety(-ns)](https://github.com/mahrtayyab/tweety), to get the data, and was only able to get tweets going back ~42 days or ~850 tweets before I would recieve empty pages of tweets from Twitter. This data gave me a good starting point of info for May and the first half of June. I plan to, every month, run the script and update the spreadsheet with new data. 
-
-## Depreciated code
-
-The JS folder is mostly depreciated and useless as the third-party API I used, Rettiwt, seemed to have issues getting the second page of tweets, and I was only able to ever get the most recent 20 tweets from the given account.
+The excel file Rec Centre.xlsx has the best information on the busyness of the weight room. As twitter changed their API policy (thanks a lot Elon) I was having to use a third-party API, [Tweety(-ns)](https://github.com/mahrtayyab/tweety), to get the data, and was only able to get tweets going back ~42 days or ~850 tweets before I would receive empty pages of tweets from Twitter. This initial data gave me a good starting point of data starting May 2nd 2024. I plan to, every month, run the script and update the spreadsheet with new data. 
