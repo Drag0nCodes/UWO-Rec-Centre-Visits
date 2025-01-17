@@ -61,7 +61,7 @@ for times in range(0, 100):  # Get x number of twitter pages
         local_datetime = utc_datetime.replace(tzinfo=pytz.utc).astimezone(timezone)  # Change it from UTC to Toronto time (ET)
 
         # Get the line that has with "wr" in it
-        wr_line = next((line for line in lines if "wr" or "wr3" in line), None)
+        wr_line = next((line for line in lines if "3wr" or "wr3" or "wr" in line), None)
 
         if wr_line is None:
             print("Could not find \'WR\' or \'WR3\' - Skipping tweet on " + str(local_datetime) + ": " + tweetTxt + "\n\n")
